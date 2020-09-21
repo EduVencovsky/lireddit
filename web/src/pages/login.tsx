@@ -10,11 +10,11 @@ import NextLink from 'next/link'
 import { withUrqlClient } from 'next-urql'
 import { createUrqlClient } from '../utils/createUrqlClient'
 
-interface LoginProps {}
+interface LoginProps { }
 
 const Login = ({ }: LoginProps) => {
   const router = useRouter()
-  const [{ }, login] = useLoginMutation()
+  const [, login] = useLoginMutation()
 
   return (
     <Wrapper variant='small'>
@@ -25,7 +25,13 @@ const Login = ({ }: LoginProps) => {
           if (response.data?.login.errors) {
             setErrors(toErrorMap(response.data.login.errors))
           } else if (response.data?.login.user) {
-            router.push('/')
+            console.log(router)
+            if (typeof router.query.next === 'string') {
+              router.push(router.query.next)
+            }
+            else {
+              router.push('/')
+            }
           }
         }}
       >
