@@ -1,4 +1,4 @@
-import { cacheExchange } from "@urql/exchange-graphcache"
+import { cacheExchange, Resolver } from "@urql/exchange-graphcache"
 import { dedupExchange, fetchExchange } from "urql"
 import { LogoutMutation, MeQuery, MeDocument, LoginMutation, RegisterMutation } from "../generated/graphql"
 import { betterUpdateQuery } from "./betterUpdateQuery"
@@ -9,68 +9,137 @@ import Router from 'next/router'
 const errorExchange: Exchange = ({ forward }) => ops$ => {
   return pipe(
     forward(ops$),
-    tap(({error}) => {
+    tap(({ error }) => {
       console.log(error)
-      if(error?.message.includes('not authenticated')) {
+      if (error?.message.includes('not authenticated')) {
         Router.replace('/login')
       }
     })
   )
 }
 
-export const createUrqlClient = (ssrEchange: any) => ({
-  url: 'http://localhost:4000/graphql',
-  fetchOptions: {
-    credentials: 'include' as const
-  },
-  exchanges: [
-    dedupExchange,
-    cacheExchange({
-      updates: {
-        Mutation: {
-          logout: (result, args, cache, info) => {
-            betterUpdateQuery<LogoutMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              result,
-              () => ({ me: null })
-            )
-          },
-          login: (result, args, cache, info) => {
-            betterUpdateQuery<LoginMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              result,
-              (innerResult, query) => {
-                if (innerResult.login.errors) {
-                  return query
-                } else {
-                  return {
-                    me: innerResult.login.user
+export const cursorPagination = (): Resolver => {
+  return (_parent, fieldArgs, cache, info) => {
+    const { parentKey: entityKey, fieldName } = info;    
+    const allFields = cache.inspectFields(entityKey);
+    const fieldInfos = allFields.filter(info => info.fieldName === fieldName);
+    const size = fieldInfos.length;
+    if (size === 0) {
+      return undefined;
+    }
+
+    //   const visited = new Set();
+    //   let result: NullArray<string> = [];
+    //   let prevOffset: number | null = null;
+
+    //   for (let i = 0; i < size; i++) {
+    //     const { fieldKey, arguments: args } = fieldInfos[i];
+    //     if (args === null || !compareArgs(fieldArgs, args)) {
+    //       continue;
+    //     }
+
+    //     const links = cache.resolveFieldByKey(entityKey, fieldKey) as string[];
+    //     const currentOffset = args[cursorArgument];
+
+    //     if (
+    //       links === null ||
+    //       links.length === 0 ||
+    //       typeof currentOffset !== 'number'
+    //     ) {
+    //       continue;
+    //     }
+
+    //     if (!prevOffset || currentOffset > prevOffset) {
+    //       for (let j = 0; j < links.length; j++) {
+    //         const link = links[j];
+    //         if (visited.has(link)) continue;
+    //         result.push(link);
+    //         visited.add(link);
+    //       }
+    //     } else {
+    //       const tempResult: NullArray<string> = [];
+    //       for (let j = 0; j < links.length; j++) {
+    //         const link = links[j];
+    //         if (visited.has(link)) continue;
+    //         tempResult.push(link);
+    //         visited.add(link);
+    //       }
+    //       result = [...tempResult, ...result];
+    //     }
+
+    //     prevOffset = currentOffset;
+    //   }
+
+    //   const hasCurrentPage = cache.resolve(entityKey, fieldName, fieldArgs);
+    //   if (hasCurrentPage) {
+    //     return result;
+    //   } else if (!(info as any).store.schema) {
+    //     return undefined;
+    //   } else {
+    //     info.partial = true;
+    //     return result;
+    //   }
+    };
+  };
+
+  export const createUrqlClient = (ssrEchange: any) => ({
+    url: 'http://localhost:4000/graphql',
+    fetchOptions: {
+      credentials: 'include' as const
+    },
+    exchanges: [
+      dedupExchange,
+      cacheExchange({
+        resolvers: {
+          Query: {
+            posts: cursorPagination()
+          }
+        },
+        updates: {
+          Mutation: {
+            logout: (result, args, cache, info) => {
+              betterUpdateQuery<LogoutMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                result,
+                () => ({ me: null })
+              )
+            },
+            login: (result, args, cache, info) => {
+              betterUpdateQuery<LoginMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                result,
+                (innerResult, query) => {
+                  if (innerResult.login.errors) {
+                    return query
+                  } else {
+                    return {
+                      me: innerResult.login.user
+                    }
                   }
-                }
-              })
-          },
-          register: (result, args, cache, info) => {
-            betterUpdateQuery<RegisterMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              result,
-              (innerResult, query) => {
-                if (innerResult.register.errors) {
-                  return query
-                } else {
-                  return {
-                    me: innerResult.register.user
+                })
+            },
+            register: (result, args, cache, info) => {
+              betterUpdateQuery<RegisterMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                result,
+                (innerResult, query) => {
+                  if (innerResult.register.errors) {
+                    return query
+                  } else {
+                    return {
+                      me: innerResult.register.user
+                    }
                   }
-                }
-              })
+                })
+            }
           }
         }
-      }
-    }),
-    errorExchange,
-    ssrEchange,
-    fetchExchange,
-  ],
-})
+      }),
+      errorExchange,
+      ssrEchange,
+      fetchExchange,
+    ],
+  })
