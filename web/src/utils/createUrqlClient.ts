@@ -1,5 +1,5 @@
 import { cacheExchange, Resolver } from "@urql/exchange-graphcache"
-import { dedupExchange, fetchExchange } from "urql"
+import { dedupExchange, fetchExchange, stringifyVariables } from "urql"
 import { LogoutMutation, MeQuery, MeDocument, LoginMutation, RegisterMutation } from "../generated/graphql"
 import { betterUpdateQuery } from "./betterUpdateQuery"
 import { pipe, tap } from 'wonka'
@@ -27,7 +27,17 @@ export const cursorPagination = (): Resolver => {
     if (size === 0) {
       return undefined;
     }
+    
+    const fieldKey = `${fieldName}${stringifyVariables(fieldArgs)}`
+    const isInTheCache = cache.resolveFieldByKey(entityKey, fieldKey)
+    info.partial = !isInTheCache
 
+    let results: string[] = []
+    fieldInfos.forEach(fi => {
+      const data = cache.resolveFieldByKey(entityKey, fi.fieldKey) as string[]
+      results.push(...data)
+    })
+    return results
     //   const visited = new Set();
     //   let result: NullArray<string> = [];
     //   let prevOffset: number | null = null;
