@@ -43,7 +43,7 @@ const Index = () => {
           ))}
         </Stack>
       }
-      {data && (
+      {data && data.posts.hasMore && (
         <Flex>
           <Button onClick={() => {
             setVariables(prev => ({

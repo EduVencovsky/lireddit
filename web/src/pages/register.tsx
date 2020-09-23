@@ -21,7 +21,6 @@ const Register = ({ }: RegisterProps) => {
         initialValues={{ username: '', password: '', email: '' }}
         onSubmit={async (values, { setErrors }) => {
           const response = await register({ options: values })
-          console.log(response)
           if (response.data?.register.errors) {
             setErrors(toErrorMap(response.data.register.errors))
           } else if (response.data?.register.user) {

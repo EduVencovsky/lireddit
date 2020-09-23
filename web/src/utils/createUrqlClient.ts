@@ -10,7 +10,6 @@ const errorExchange: Exchange = ({ forward }) => ops$ => {
   return pipe(
     forward(ops$),
     tap(({ error }) => {
-      console.log(error)
       if (error?.message.includes('not authenticated')) {
         Router.replace('/login')
       }
@@ -20,24 +19,36 @@ const errorExchange: Exchange = ({ forward }) => ops$ => {
 
 export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
-    const { parentKey: entityKey, fieldName } = info;    
+    const { parentKey: entityKey, fieldName } = info;
     const allFields = cache.inspectFields(entityKey);
     const fieldInfos = allFields.filter(info => info.fieldName === fieldName);
     const size = fieldInfos.length;
     if (size === 0) {
       return undefined;
     }
-    
+
     const fieldKey = `${fieldName}${stringifyVariables(fieldArgs)}`
-    const isInTheCache = cache.resolveFieldByKey(entityKey, fieldKey)
+    const isInTheCache = cache.resolve(
+      cache.resolveFieldByKey(entityKey, fieldKey) as string,
+      "posts"
+    )
     info.partial = !isInTheCache
 
     let results: string[] = []
+    let hasMore = true
     fieldInfos.forEach(fi => {
-      const data = cache.resolveFieldByKey(entityKey, fi.fieldKey) as string[]
+      const key = cache.resolveFieldByKey(entityKey, fi.fieldKey) as string
+      const data = cache.resolve(key, 'posts') as string[]
+      const _hasMore = cache.resolve(key, 'hasMore')
+      if (!_hasMore) hasMore = _hasMore as boolean
       results.push(...data)
     })
-    return results
+
+    return { 
+      __typename: 'PaginatedPosts',
+      hasMore, 
+      posts: results 
+    }
     //   const visited = new Set();
     //   let result: NullArray<string> = [];
     //   let prevOffset: number | null = null;
@@ -89,67 +100,70 @@ export const cursorPagination = (): Resolver => {
     //     info.partial = true;
     //     return result;
     //   }
-    };
   };
+};
 
-  export const createUrqlClient = (ssrEchange: any) => ({
-    url: 'http://localhost:4000/graphql',
-    fetchOptions: {
-      credentials: 'include' as const
-    },
-    exchanges: [
-      dedupExchange,
-      cacheExchange({
-        resolvers: {
-          Query: {
-            posts: cursorPagination()
-          }
-        },
-        updates: {
-          Mutation: {
-            logout: (result, args, cache, info) => {
-              betterUpdateQuery<LogoutMutation, MeQuery>(
-                cache,
-                { query: MeDocument },
-                result,
-                () => ({ me: null })
-              )
-            },
-            login: (result, args, cache, info) => {
-              betterUpdateQuery<LoginMutation, MeQuery>(
-                cache,
-                { query: MeDocument },
-                result,
-                (innerResult, query) => {
-                  if (innerResult.login.errors) {
-                    return query
-                  } else {
-                    return {
-                      me: innerResult.login.user
-                    }
+export const createUrqlClient = (ssrEchange: any) => ({
+  url: 'http://localhost:4000/graphql',
+  fetchOptions: {
+    credentials: 'include' as const
+  },
+  exchanges: [
+    dedupExchange,
+    cacheExchange({
+      keys: {
+        PaginatedPosts: () => null,
+      },
+      resolvers: {
+        Query: {
+          posts: cursorPagination()
+        }
+      },
+      updates: {
+        Mutation: {
+          logout: (result, args, cache, info) => {
+            betterUpdateQuery<LogoutMutation, MeQuery>(
+              cache,
+              { query: MeDocument },
+              result,
+              () => ({ me: null })
+            )
+          },
+          login: (result, args, cache, info) => {
+            betterUpdateQuery<LoginMutation, MeQuery>(
+              cache,
+              { query: MeDocument },
+              result,
+              (innerResult, query) => {
+                if (innerResult.login.errors) {
+                  return query
+                } else {
+                  return {
+                    me: innerResult.login.user
                   }
-                })
-            },
-            register: (result, args, cache, info) => {
-              betterUpdateQuery<RegisterMutation, MeQuery>(
-                cache,
-                { query: MeDocument },
-                result,
-                (innerResult, query) => {
-                  if (innerResult.register.errors) {
-                    return query
-                  } else {
-                    return {
-                      me: innerResult.register.user
-                    }
+                }
+              })
+          },
+          register: (result, args, cache, info) => {
+            betterUpdateQuery<RegisterMutation, MeQuery>(
+              cache,
+              { query: MeDocument },
+              result,
+              (innerResult, query) => {
+                if (innerResult.register.errors) {
+                  return query
+                } else {
+                  return {
+                    me: innerResult.register.user
                   }
-                })
-            }
+                }
+              })
           }
         }
-      }),
-      errorExchange,
-      ssrEchange,
-      fetchExchange,
-    ],
-  })
+      }
+    }),
+    errorExchange,
+    ssrEchange,
+    fetchExchange,
+  ],
+})

@@ -27,7 +27,6 @@ export const ChangePassword = () => {
           if (response.data?.changePassword.errors) {
             const errorMap = toErrorMap(response.data.changePassword.errors)
             if ('token' in errorMap) {
-              console.log(errorMap)
               setTokenError(errorMap.token)
             }
             setErrors(errorMap)
