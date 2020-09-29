@@ -103,8 +103,8 @@ export class PostResolver {
         'createdAt', u."createdAt",
         'updatedAt', u."updatedAt" 
       ) creator,
-      ${userId ? 
-        '(select value from updoot where "userId" = $2 and "postId" = p.id) "voteStatus"' : 
+      ${userId ?
+        '(select value from updoot where "userId" = $2 and "postId" = p.id) "voteStatus"' :
         'null as "voteStatus"'
       }
       from post p
@@ -133,7 +133,7 @@ export class PostResolver {
   post(
     @Arg('id', () => Int) id: number,
   ): Promise<Post | undefined> {
-    return Post.findOne(id)
+    return Post.findOne(id, { relations: ['creator'] })
   }
 
   @Mutation(() => Post)

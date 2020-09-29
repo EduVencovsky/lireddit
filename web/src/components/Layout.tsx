@@ -4,11 +4,11 @@ import { AppBar } from './AppBar'
 import { Wrapper, WrapperProps } from './Wrapper'
 
 interface LayoutProps {
-  variant: WrapperProps['variant']
+  variant?: WrapperProps['variant']
   children: React.ReactNode
 }
 
-export const Layout = ({ variant, children }: LayoutProps) => {
+export const Layout = ({ variant = "small", children }: LayoutProps) => {
   return (
     <>
       <AppBar />

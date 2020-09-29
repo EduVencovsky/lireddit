@@ -1,4 +1,4 @@
-import { Box, Flex, Link, Button } from '@chakra-ui/core'
+import { Box, Flex, Link, Button, Heading } from '@chakra-ui/core'
 import NextLink from 'next/link'
 import { useLogoutMutation, useMeQuery } from '../generated/graphql'
 import { isServer } from '../utils/isServer'
@@ -27,7 +27,12 @@ export const AppBar = ({ }: AppBarProps) => {
     )
   } else {
     body = (
-      <Flex>
+      <Flex align="center">
+        <NextLink href="/create-post">
+          <Button as={Link} mr={4}>
+            Create Post
+          </Button>
+        </NextLink>
         <Box mr={4}>
           {data.me.username}
         </Box>
@@ -39,10 +44,17 @@ export const AppBar = ({ }: AppBarProps) => {
   }
 
   return (
-    <Flex bg="tan" p={4}>
-      <Box ml='auto'>
-        {body}
-      </Box>
+    <Flex zIndex={1} position="sticky" top={0} bg="tan" p={4} align="center">
+      <Flex maxW={800} flex={1} align="center" margin="auto">
+        <NextLink href="/">
+          <Link>
+            <Heading>LiReddit</Heading>
+          </Link>
+        </NextLink>
+        <Box ml='auto'>
+          {body}
+        </Box>
+      </Flex>
     </Flex>
   )
 }
