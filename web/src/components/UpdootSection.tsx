@@ -20,10 +20,12 @@ export const UpdootSection = ({ post }: UpdootSectionProps) => {
     >
       <IconButton
         onClick={async () => {
+          if(post.voteStatus === 1) return           
           setLoadingState('updoot-loading')
           vote({ postId: post.id, value: 1 })
           setLoadingState('not-loading')
         }}
+        variantColor={post.voteStatus == 1 ? "green" : undefined}
         aria-label="up vote"
         isLoading={loadingState === 'updoot-loading'}
         icon="chevron-up"
@@ -31,11 +33,13 @@ export const UpdootSection = ({ post }: UpdootSectionProps) => {
       {post.points}
       <IconButton
         onClick={async () => {
+          if(post.voteStatus === -1) return           
           setLoadingState('downdoot-loading')
           vote({ postId: post.id, value: -1 })
           setLoadingState('not-loading')
-        }}
+        }}        
         aria-label="down vote"
+        variantColor={post.voteStatus == -1 ? "red" : undefined}
         isLoading={loadingState === 'downdoot-loading'}
         icon="chevron-down"
       />
