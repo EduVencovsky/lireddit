@@ -56,7 +56,7 @@ export const cursorPagination = (): Resolver => {
 
 export const createUrqlClient = (ssrEchange: any, ctx: any) => {
   let cookie = ''
-  if (isServer()) cookie = ctx.req.headers.cookie
+  if (isServer() && ctx?.req) cookie = ctx.req.headers.cookie
 
   return {
     url: 'http://localhost:4000/graphql',
