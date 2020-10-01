@@ -10,16 +10,15 @@ import { EditDeletePostButtons } from '../components/EditDeletePostButtons'
 
 const Index = () => {
   const [variables, setVariables] = useState({ limit: 15, cursor: null as null | string })
-  const [{ data, fetching }] = usePostsQuery({
+  const [{ data, error, fetching }] = usePostsQuery({
     variables
   })
-
-  const [, deletePost] = useDeletePostMutation()
-
+  
   if (!fetching && !data) {
     return (
       <div>
         Failed to query for some reason
+        <div>{error?.message}</div>
       </div>
     )
   }
