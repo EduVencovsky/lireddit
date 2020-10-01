@@ -6,6 +6,7 @@ import { useRouter } from 'next/router'
 import { Layout } from '../../components/Layout'
 import { Box, Heading } from '@chakra-ui/core'
 import { useGetPostFromUrl } from '../../hooks/useGetPostFromUrl'
+import { EditDeletePostButtons } from '../../components/EditDeletePostButtons'
 
 interface PostProps { }
 
@@ -39,7 +40,10 @@ export const Post = ({ }) => {
       <Heading mb={4}>
         {data.post.title}
       </Heading>
-      {data.post.text}
+      <Box mb={4}>
+        {data.post.text}      
+      </Box>
+      <EditDeletePostButtons id={data.post.id} creatorId={data.post.creator.id} />
     </Layout>
   )
 }

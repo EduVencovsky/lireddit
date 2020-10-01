@@ -6,6 +6,7 @@ import { createUrqlClient } from '../utils/createUrqlClient'
 import NextLink from 'next/link'
 import { Box, Button, Flex, Heading, IconButton, Link, Stack, Text } from '@chakra-ui/core'
 import { UpdootSection } from '../components/UpdootSection'
+import { EditDeletePostButtons } from '../components/EditDeletePostButtons'
 
 const Index = () => {
   const [variables, setVariables] = useState({ limit: 15, cursor: null as null | string })
@@ -13,7 +14,6 @@ const Index = () => {
     variables
   })
 
-  const [{ data: meData }] = useMeQuery()
   const [, deletePost] = useDeletePostMutation()
 
   if (!fetching && !data) {
@@ -43,23 +43,7 @@ const Index = () => {
                 </Text>
                 <Flex>
                   <Text flex={1} mt={4}>{p.textSnippet}</Text>
-                  {meData?.me?.id !== p.creator.id ? null : <Box ml="auto">
-                    <NextLink href='/post/edit/[id]' as={`/post/edit/${p.id}`}>
-                      <IconButton
-                        as={Link}
-                        mr={4}
-                        icon="edit"
-                        aria-label="Edit Post"
-                      />
-                    </NextLink>
-                    <IconButton
-                      ml="auto"
-                      icon="delete"
-                      aria-label="DeletePost"
-                      onClick={() => deletePost({ id: p.id })}
-                    />
-                  </Box>
-                  }
+                    <EditDeletePostButtons id={p.id} creatorId={p.creator.id} />
                 </Flex>
               </Box>
             </Flex>
