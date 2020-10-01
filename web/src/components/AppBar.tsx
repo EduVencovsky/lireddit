@@ -1,11 +1,13 @@
 import { Box, Flex, Link, Button, Heading } from '@chakra-ui/core'
 import NextLink from 'next/link'
+import { useRouter } from 'next/router'
 import { useLogoutMutation, useMeQuery } from '../generated/graphql'
 import { isServer } from '../utils/isServer'
 
 interface AppBarProps { }
 
 export const AppBar = ({ }: AppBarProps) => {
+  const router = useRouter()
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation()
   const [{ data, fetching }] = useMeQuery({
     pause: isServer()
@@ -36,7 +38,10 @@ export const AppBar = ({ }: AppBarProps) => {
         <Box mr={4}>
           {data.me.username}
         </Box>
-        <Button onClick={() => logout()} variant="link" isLoading={logoutFetching}>
+        <Button onClick={async () => {
+          await logout()
+          router.reload()
+        }} variant="link" isLoading={logoutFetching}>
           Logout
         </Button>
       </Flex>
